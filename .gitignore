@@ -111,7 +111,7 @@ env.bak/
 venv.bak/
 ./vitcod_env/
 vitcod_env/
-
+ 
 # Spyder project settings
 .spyderproject
 .spyproject

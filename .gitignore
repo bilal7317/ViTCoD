@@ -136,3 +136,8 @@ dmypy.json
 # Ignore hardware weight folders (top-level and any nested ones)
 hardware_weights/
 **/hardware_weights/
+
+# Ignore specific experiment/export script and hardware weights complete folder
+Algorithm/deit/export_all_weights.py
+Algorithm/deit/hardware_weights_complete/
+

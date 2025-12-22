@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Large Files
+
+# Ignore dataset tarball used for experiments
+/imagenette2-320.tgz
+
+# Ignore hardware weight folders (top-level and any nested ones)
+hardware_weights/
+**/hardware_weights/

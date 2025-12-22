@@ -1,0 +1,235 @@
+ (vitcod_py38) bilal-linux@bilal-PC:~/Research/ViTCoD/Algorithm/deit$ python3 verify_vitcod_model.py
+Loading checkpoint...
+
+============================================================
+MODEL WEIGHTS ANALYSIS
+============================================================
+
+Block 0:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 1:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 2:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 3:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 4:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 5:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 6:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 7:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 8:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 9:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 10:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+Block 11:
+  encoder_q: torch.Size([2, 3]) (num_heads -> hidden)
+  decoder_q: torch.Size([3, 2]) (hidden -> num_heads)
+  encoder_k: torch.Size([2, 3])
+  decoder_k: torch.Size([3, 2])
+
+✅ Encoder/Decoder weights found and saved!
+
+============================================================
+SPARSE MASKS ANALYSIS
+============================================================
+Masks shape: (12, 3, 197, 197)
+Masks dtype: bool
+✅ Sparse masks saved!
+  Layer 0: shape=(3, 197, 197), sparsity=91.19%
+  Layer 1: shape=(3, 197, 197), sparsity=90.92%
+  Layer 2: shape=(3, 197, 197), sparsity=91.08%
+  Layer 3: shape=(3, 197, 197), sparsity=90.99%
+  Layer 4: shape=(3, 197, 197), sparsity=91.12%
+  Layer 5: shape=(3, 197, 197), sparsity=91.18%
+  Layer 6: shape=(3, 197, 197), sparsity=90.91%
+  Layer 7: shape=(3, 197, 197), sparsity=91.36%
+  Layer 8: shape=(3, 197, 197), sparsity=91.34%
+  Layer 9: shape=(3, 197, 197), sparsity=90.91%
+  Layer 10: shape=(3, 197, 197), sparsity=91.25%
+  Layer 11: shape=(3, 197, 197), sparsity=91.29%
+
+============================================================
+SAVED FILES FOR HARDWARE
+============================================================
+  block0_decoder_k_bias.npy: 0.14 KB
+  block0_decoder_k_weight.npy: 0.15 KB
+  block0_decoder_q_bias.npy: 0.14 KB
+  block0_decoder_q_weight.npy: 0.15 KB
+  block0_encoder_k_bias.npy: 0.13 KB
+  block0_encoder_k_weight.npy: 0.15 KB
+  block0_encoder_q_bias.npy: 0.13 KB
+  block0_encoder_q_weight.npy: 0.15 KB
+  block10_decoder_k_bias.npy: 0.14 KB
+  block10_decoder_k_weight.npy: 0.15 KB
+  block10_decoder_q_bias.npy: 0.14 KB
+  block10_decoder_q_weight.npy: 0.15 KB
+  block10_encoder_k_bias.npy: 0.13 KB
+  block10_encoder_k_weight.npy: 0.15 KB
+  block10_encoder_q_bias.npy: 0.13 KB
+  block10_encoder_q_weight.npy: 0.15 KB
+  block11_decoder_k_bias.npy: 0.14 KB
+  block11_decoder_k_weight.npy: 0.15 KB
+  block11_decoder_q_bias.npy: 0.14 KB
+  block11_decoder_q_weight.npy: 0.15 KB
+  block11_encoder_k_bias.npy: 0.13 KB
+  block11_encoder_k_weight.npy: 0.15 KB
+  block11_encoder_q_bias.npy: 0.13 KB
+  block11_encoder_q_weight.npy: 0.15 KB
+  block1_decoder_k_bias.npy: 0.14 KB
+  block1_decoder_k_weight.npy: 0.15 KB
+  block1_decoder_q_bias.npy: 0.14 KB
+  block1_decoder_q_weight.npy: 0.15 KB
+  block1_encoder_k_bias.npy: 0.13 KB
+  block1_encoder_k_weight.npy: 0.15 KB
+  block1_encoder_q_bias.npy: 0.13 KB
+  block1_encoder_q_weight.npy: 0.15 KB
+  block2_decoder_k_bias.npy: 0.14 KB
+  block2_decoder_k_weight.npy: 0.15 KB
+  block2_decoder_q_bias.npy: 0.14 KB
+  block2_decoder_q_weight.npy: 0.15 KB
+  block2_encoder_k_bias.npy: 0.13 KB
+  block2_encoder_k_weight.npy: 0.15 KB
+  block2_encoder_q_bias.npy: 0.13 KB
+  block2_encoder_q_weight.npy: 0.15 KB
+  block3_decoder_k_bias.npy: 0.14 KB
+  block3_decoder_k_weight.npy: 0.15 KB
+  block3_decoder_q_bias.npy: 0.14 KB
+  block3_decoder_q_weight.npy: 0.15 KB
+  block3_encoder_k_bias.npy: 0.13 KB
+  block3_encoder_k_weight.npy: 0.15 KB
+  block3_encoder_q_bias.npy: 0.13 KB
+  block3_encoder_q_weight.npy: 0.15 KB
+  block4_decoder_k_bias.npy: 0.14 KB
+  block4_decoder_k_weight.npy: 0.15 KB
+  block4_decoder_q_bias.npy: 0.14 KB
+  block4_decoder_q_weight.npy: 0.15 KB
+  block4_encoder_k_bias.npy: 0.13 KB
+  block4_encoder_k_weight.npy: 0.15 KB
+  block4_encoder_q_bias.npy: 0.13 KB
+  block4_encoder_q_weight.npy: 0.15 KB
+  block5_decoder_k_bias.npy: 0.14 KB
+  block5_decoder_k_weight.npy: 0.15 KB
+  block5_decoder_q_bias.npy: 0.14 KB
+  block5_decoder_q_weight.npy: 0.15 KB
+  block5_encoder_k_bias.npy: 0.13 KB
+  block5_encoder_k_weight.npy: 0.15 KB
+  block5_encoder_q_bias.npy: 0.13 KB
+  block5_encoder_q_weight.npy: 0.15 KB
+  block6_decoder_k_bias.npy: 0.14 KB
+  block6_decoder_k_weight.npy: 0.15 KB
+  block6_decoder_q_bias.npy: 0.14 KB
+  block6_decoder_q_weight.npy: 0.15 KB
+  block6_encoder_k_bias.npy: 0.13 KB
+  block6_encoder_k_weight.npy: 0.15 KB
+  block6_encoder_q_bias.npy: 0.13 KB
+  block6_encoder_q_weight.npy: 0.15 KB
+  block7_decoder_k_bias.npy: 0.14 KB
+  block7_decoder_k_weight.npy: 0.15 KB
+  block7_decoder_q_bias.npy: 0.14 KB
+  block7_decoder_q_weight.npy: 0.15 KB
+  block7_encoder_k_bias.npy: 0.13 KB
+  block7_encoder_k_weight.npy: 0.15 KB
+  block7_encoder_q_bias.npy: 0.13 KB
+  block7_encoder_q_weight.npy: 0.15 KB
+  block8_decoder_k_bias.npy: 0.14 KB
+  block8_decoder_k_weight.npy: 0.15 KB
+  block8_decoder_q_bias.npy: 0.14 KB
+  block8_decoder_q_weight.npy: 0.15 KB
+  block8_encoder_k_bias.npy: 0.13 KB
+  block8_encoder_k_weight.npy: 0.15 KB
+  block8_encoder_q_bias.npy: 0.13 KB
+  block8_encoder_q_weight.npy: 0.15 KB
+  block9_decoder_k_bias.npy: 0.14 KB
+  block9_decoder_k_weight.npy: 0.15 KB
+  block9_decoder_q_bias.npy: 0.14 KB
+  block9_decoder_q_weight.npy: 0.15 KB
+  block9_encoder_k_bias.npy: 0.13 KB
+  block9_encoder_k_weight.npy: 0.15 KB
+  block9_encoder_q_bias.npy: 0.13 KB
+  block9_encoder_q_weight.npy: 0.15 KB
+  sparse_masks.npy: 1364.50 KB
+
+✅ All weights saved to: ./hardware_weights/
+(vitcod_py38) bilal-linux@bilal-PC:~/Research/ViTCoD/Algorithm/deit$ python test_inference.py
+Loading ViTCoD model...
+mask_path:  ./masks/tiny/info_0.9.npy
+need weight:  False
+svd type:  mix_head_fc_qk
+##################################################Load a mask from an external file.##################################################
+##################################################./masks/tiny/info_0.9.npy##################################################
+Num total elements: 1397124, Num remaining elements: 1273182
+##############################Ratio of remaining elements: 91.13%##############################
+Num total elements: 1382976, Num remaining elements excluding cls: 1259034
+##############################Ratio of remaining elements excluding cls token: 91.04%##############################
+Masking element raio: 8.87%
+Reduced number of GFlops per Layer: 0.0013
+Reduced number of GFlops in total: 0.0159
+Running inference...
+Output shape: torch.Size([1, 1000])
+Predicted class: 4
+Recon loss: 5100.19677734375
+
+✅ Software inference working!
+
+ 
+got this output on terminal. Is there anything else i need to add to be able to raplicate ViTCoD paper for both hardware inference and software inference? 
+
+does it implement the following characteristics in software that needs to be implemented in software:?
+
+A. Preliminaries of Self-Attention and ViTs
+B. ViTCoD’s Split and Conquer Algorithm
+C. ViTCoD Learnable Auto-encoder Module
+D. The Unified ViTCoD Algorithm
+
+i am sharing these headings from the research paper for context.
+

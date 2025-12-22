@@ -37,8 +37,8 @@ from .helpers import build_model_with_cfg, named_apply, adapt_input_conv
 from .layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
 from .registry import register_model
 
-import mask_utils
-import utils
+from . import mask_utils
+from . import utils
 
 _logger = logging.getLogger(__name__)
 

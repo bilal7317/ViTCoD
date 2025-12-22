@@ -17,9 +17,19 @@ __all__ = [
 ]
 
 
+
 class DistilledVisionTransformer(VisionTransformer):
     def __init__(self, *args, **kwargs):
+        # Remove extra kwargs that VisionTransformer doesn't use
+        #kwargs.pop('need_weight', None)
+        kwargs.pop('mask_path', None)
+        kwargs.pop('svd_type', None)   # <--- filter svd_type
+        kwargs.pop('teacher_model', None)  # optional, in case passed
+        kwargs.pop('teacher_path', None)   # optional
+
         super().__init__(*args, **kwargs)
+
+        # Distillation-specific tokens
         self.dist_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
         num_patches = self.patch_embed.num_patches
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 2, self.embed_dim))
@@ -29,13 +39,12 @@ class DistilledVisionTransformer(VisionTransformer):
         trunc_normal_(self.pos_embed, std=.02)
         self.head_dist.apply(self._init_weights)
 
+
     def forward_features(self, x):
-        # taken from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
-        # with slight modifications to add the dist_token
         B = x.shape[0]
         x = self.patch_embed(x)
 
-        cls_tokens = self.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
+        cls_tokens = self.cls_token.expand(B, -1, -1)
         dist_token = self.dist_token.expand(B, -1, -1)
         x = torch.cat((cls_tokens, dist_token, x), dim=1)
 
@@ -48,30 +57,50 @@ class DistilledVisionTransformer(VisionTransformer):
         x = self.norm(x)
         return x[:, 0], x[:, 1]
 
-    def forward(self, x):
-        x, x_dist = self.forward_features(x)
+    def forward(self, x, evaluate=False):
+        x = self.forward_features(x)
         x = self.head(x)
-        x_dist = self.head_dist(x_dist)
-        if self.training:
-            return x, x_dist
-        else:
-            # during inference, return the average of both classifier predictions
-            return (x + x_dist) / 2
+        
+        # Collect reconstruction loss from all attention layers
+        recon_loss = torch.tensor(0.0, device=x.device)
+        for blk in self.blocks:
+            if hasattr(blk.attn, 'recon_loss') and blk.attn.recon_loss != 0:
+                recon_loss = recon_loss + blk.attn.recon_loss
+        
+        return x, recon_loss
+
 
 
 @register_model
+
 def deit_tiny_patch16_224(pretrained=False, **kwargs):
+    # Instantiate the **distilled version**
+    #kwargs.pop('need_weight', None)
+    # kwargs.pop('mask_path', None)
+    # kwargs.pop('svd_type', None)
+    kwargs.pop('teacher_model', None)
+    kwargs.pop('teacher_path', None)
+
     model = VisionTransformer(
         patch_size=16, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4, qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs
+    )
+    
     model.default_cfg = _cfg()
+
     if pretrained:
         checkpoint = torch.hub.load_state_dict_from_url(
             url="https://dl.fbaipublicfiles.com/deit/deit_tiny_patch16_224-a1311bcf.pth",
-            map_location="cpu", check_hash=True
+            map_location="cpu",
+            check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        # load pretrained weights (ignore missing keys for head_dist)
+        model.load_state_dict(checkpoint["model"], strict=False)
+
     return model
+
+
+
 
 
 @register_model

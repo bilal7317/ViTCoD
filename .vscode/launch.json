@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug ViTCoD Low-Rank (Tiny)",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/bilal-linux/Research/ViTCoD/Algorithm/deit/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--model", "deit_tiny_patch16_224",
+                "--resume", "https://dl.fbaipublicfiles.com/deit/deit_tiny_patch16_224-a1311bcf.pth",
+                "--data-path", "/home/bilal-linux/Research/datasets/imagenet",
+                "--lr", "1e-4",
+                "--weight-decay", "1e-8",
+                "--epochs", "3",
+                "--min-lr", "5e-6",
+                "--batch-size", "32",
+                "--output_dir", "./exp/lowrank/tiny",
+                "--svd_type", "mix_head_fc_qk"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            }
+        }
+    ]
+}

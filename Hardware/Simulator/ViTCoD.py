@@ -37,8 +37,15 @@ for p in args.sparse:
         datefmt='%Y/%m/%d %H:%M:%S',
         level=logging.INFO,
         handlers=handlers)
+    
     # Initialize Q, K, V and attn maps
     attn_map_mask = np.load(args.root+'/reodered_info_'+str(p)+'.npy')
+    
+    # 1. The reordered sparse pattern (mask)
+    # → used for hardware-friendly block-sparse computation
+    # 2. The mapping to original token positions
+    # → used to restore the original token order after computation
+
     num_global_tokens = np.load(args.root+'/global_token_info_'+str(p)+'.npy')
     
     # dim of (layer, head, token, features)
@@ -46,6 +53,11 @@ for p in args.sparse:
     all_K = np.random.random((attn_map_mask.shape[0], attn_map_mask.shape[1], attn_map_mask.shape[2], args.feature_dim))
     all_V = np.random.random((attn_map_mask.shape[0], attn_map_mask.shape[1], attn_map_mask.shape[2], args.feature_dim))
     log.info('Shape: {}'.format(all_V.shape))
+
+
+    # Initialize the simulated hardware components
+    # SRAM  → models on-chip memory access cycles (load/store)
+    # PE_array → models compute cycles of SDDMM, SpMM, Linear layers
     my_SRAM = SRAM()
     my_PE = PE_array()
 
@@ -87,22 +99,57 @@ for p in args.sparse:
             total_sparse_ratio += sparse_ratio
             # log.info('number of non-zeros in the sparser region: {}'.format(len(sparser)))
 
+
+# preload_K()	Move K tile from global SRAM into K-stationary buffer	DMA → K/S scratchpad
+# preload_Q()	Move Q tile to Q vector buffer	DMA → Q/V scratchpad
+# preload_decoder()	Load decoder/bias into small buffer	DMA → small config memory
+
+# | Concept            | Meaning in your code                                                             |
+# | ------------------ | -------------------------------------------------------------------------------- |
+# | **Preprocessing**  | Tiling, reshaping, and splitting K/Q vectors into PE-sized chunks (not compute). |
+# | **Loading K/Q**    | Yes, K and Q are fetched from SRAM to on-chip scratchpads (K/S, Q/V).            |
+# | **preload_cycles** | Cycles to move data from SRAM → buffers (through encoders/decoders).             |
+# | **PRE_cycles**     | Cycles to reformat tiles before sending to the PE array.                         |
+
+
             # data loading and pre-processing
             # ############## dense pattern q*k ##############
             preload_cycles = 0
             PRE_cycles = 0
             SDDMM_PE_cycles = 0
             for _sta_k in range(global_tokens): 
+
+                # ---------------------------------------------------------------
+                # 1. LOAD K VECTOR + DECODER WEIGHT (only once per K iteration)
+                # ---------------------------------------------------------------
+
                 # ############ k #########
                 # ######### Load k and decoder weight
                 preload_cycles += my_SRAM.preload_K(nums=head*args.ratio*1* K.shape[1], bits=8, bandwidth_ratio=1)
                 if _sta_k == 0:
                     preload_cycles += my_SRAM.preload_decoder(nums=head*args.ratio*1, bits=8, bandwidth_ratio=1/head)
                 # ######### Preprocessing 
+            
+                # ---------------------------------------------------------------
+                # 2. PREPROCESSING FOR K  (tiling / PE-width partitioning)
+                # ---------------------------------------------------------------
+
+                # Number of tiles needed = ceil(total_K_elements / PE_parallelism)
                 for k in range((math.ceil((head*args.ratio*1* K.shape[1])/int(args.PE_width*args.PE_width/head)))):
                     PRE_cycles += 1
+
+                    # -------------------------------------------------------------------
+                    # 3. FOR EVERY Q TOKEN  (Q-side stationary loop under current K)
+                    # -------------------------------------------------------------------   
+                     
                 for _sta_q in range(int(Q.shape[0])):
+                    # Only run Q-load logic during first K iteration
                     if _sta_k == 0:
+
+                    # -----------------------------------------------------------
+                    # LOAD Q VECTOR + DECODER WEIGHT (only once per Q iteration)
+                    # -----------------------------------------------------------
+                
                     # ############ q #########
                     # ######### Load q and decoder weight
                         # reload_ratio = (Q.shape[0]-(my_SRAM.max_Q/(8*Q.shape[1]*head)))/Q.shape[0]
@@ -111,6 +158,10 @@ for p in args.sparse:
                         if _sta_q == 0: 
                             preload_cycles += my_SRAM.preload_decoder(nums=head*args.ratio*1, bits=8, bandwidth_ratio=1/head)
                         # ######### Preprocessing 
+                        
+                        # -----------------------------------------------------------
+                        # PREPROCESSING FOR Q (same tiling logic as K)
+                        # -----------------------------------------------------------
                         for q in range(math.ceil((head*args.ratio*1* Q.shape[1])/int(args.PE_width*args.PE_width/head))):
                             PRE_cycles += 1*(1+reload_ratio)
             
@@ -121,29 +172,77 @@ for p in args.sparse:
 
             # ############## sparse pattern q*k ##############
             # K-stationary (Why? Because the number of gloal tokens vary a lot --> Score stationary is not best fit)
+
+            # ############## Sparse pattern q*k ##############
+            # This block computes SDDMM-style Q*Kᵀ scores using a K-stationary dataflow.
+            # Reason for K-stationary: the number of global tokens varies significantly,
+            # so holding K in the PE array (stationary) is more efficient than score-stationary.
+
             preload_cycles = 0
             PRE_cycles = 0
             # ############ k #########
             # ######### Load K and decoder weights
             for i in range(K.shape[0]-global_tokens):
+                
+                # -------------------------------------------------------
+                # 1. LOAD K VECTOR INTO ON-CHIP BUFFER (K/S)
+                # -------------------------------------------------------
+                # Load one K token (dimension = head * ratio * feature_dim)
+
                 preload_cycles += my_SRAM.preload_K(nums=head*args.ratio*1* K.shape[1], bits=8, bandwidth_ratio=1)
+                
+                # Load decoder weights only once for the first K tile
                 if i == 0:
                     preload_cycles += my_SRAM.preload_decoder(nums=head*args.ratio*1, bits=8, bandwidth_ratio=1/head)
                 # ######### Preprocessing 
+
+                # -------------------------------------------------------
+                # 2. PREPROCESSING (TILING) FOR CURRENT K TOKEN
+                # -------------------------------------------------------
+                # Break the loaded K vector into PE-sized blocks
+                # Num tiles = ceil(total_K_dim / (PE_parallelism_per_head))
+                
                 for k in range(math.ceil((head*args.ratio*1* K.shape[1])/int(args.PE_width*args.PE_width/head))):
                     PRE_cycles += 1
             
             # ############ Q #########
+
             # ######### Load Q and decoder weights
+
+            # ----- Calculate how many times Q must be reloaded -----
+            # reload_ratio tells us how many full Q loads are needed
+            # given the SRAM capacity and the number of tokens.
+
+            # Compute how often Q must be reloaded due to SRAM limits
+            # Load Q vectors from SRAM to on-chip scratchpads (multiple times)
+            # Load decoder weights (once per batch)
+            # Tile Q into PE-sized blocks (multiple times)
+            # Accumulate total cycles used in dataflow preparation
+
             reload_ratio = (V.shape[0] - global_tokens)/(my_SRAM.max_K/(head*V.shape[1]*8)-global_tokens)
             reload_ratio = max(reload_ratio, 1)
             if global_tokens==0:
                 reload_ratio = len(sparser)/mask[:, global_tokens:].shape[1]
                 for i in range(Q.shape[0]):
+
+                    # ---------------------------------------------------
+                    # 1. LOAD Q VECTOR INTO Q/V SCRATCHPAD
+                    # Each Q vector needs to be reloaded reload_ratio times
+                    # due to limited SRAM and sparse token distribution.
+                    # ---------------------------------------------------
+                    
                     preload_cycles += my_SRAM.preload_Q(nums=head*args.ratio*1* Q.shape[1], bits=8, bandwidth_ratio=1)*reload_ratio
+                    
+                    # Load decoder weights only once (i = 0)
                     if i == 0:
                         preload_cycles += my_SRAM.preload_decoder(nums=head*args.ratio*1, bits=8, bandwidth_ratio=1/head)
                     # ######### Preprocessing 
+                    
+                    # ---------------------------------------------------
+                    # 2. PREPROCESS Q VECTOR (TILING FOR PEs)
+                    # Same idea as with K: break Q into PE-sized blocks.
+                    # Each tile contributes 'reload_ratio' cycles.
+                    # ---------------------------------------------------
                     for k in range(math.ceil((head*args.ratio*1* Q.shape[1])/int(args.PE_width*args.PE_width/head))):
                         PRE_cycles += 1*reload_ratio
             total_PRE_cycles += PRE_cycles
@@ -156,8 +255,22 @@ for p in args.sparse:
             
             # DATA_cycles = 0
             # TODO:
+            
+            # ---------------- COMPUTATION STAGE ----------------
+            # K-stationary: K remains in the PE array buffers while Q streams through.
+            # Reason:
+            #    Global tokens vary a lot → Score-stationary (holding Score in PEs) is inefficient.
+            #    K-stationary keeps reuse high and reduces SRAM traffic.
+
+            # dense_ratio models how much of the attention is 'dense' vs 'sparse'            
+            
             dense_ratio = global_tokens*Q.shape[0]/(len(sparser) + global_tokens*Q.shape[0])
+            
+            # Number of PE lanes dedicated to dense computation
+            # More dense attention → allocate more lanes to dense_PE_width
             dense_PE_width = int(args.PE_width*dense_ratio)
+            
+            # Remaining PE lanes handle sparse attention
             sparse_PE_width = args.PE_width - dense_PE_width
             # ############## dense pattern q*k ##############
             dense_SDDMM_PE_cycles = 0
@@ -194,12 +307,23 @@ for p in args.sparse:
             
             # ############## sparse pattern s*v ##############
             # acumulation
+
+            # ############## sparse pattern s*v ##############
+            # This section handles Sparse SpMM:   S (sparse attention map)  ×  V
+            # S is represented using coordinate pairs in `sparser` → (_q_index, _k_index)
+            # Goal: count how many nonzeros appear in each row of S for tiling/PE scheduling.
+
+            # ----- ACCUMULATION OF NONZERO PATTERNS PER ROW -----    
+                    
             row_index = [i for i in range(V.shape[0])]
             num_list = []
             accumulator = 0
             i = 0
+
+            # Count how many (_q_index, _k_index) pairs belong to each q-row
             for _q_index, _k_index in sparser:
                 if _q_index == row_index[i]:
+                     # Continue counting nonzeros in the same row
                     accumulator += 1
                 else:
                     if accumulator == 0:
@@ -211,10 +335,17 @@ for p in args.sparse:
                     accumulator = 1
             num_list.append(accumulator)
 
+
+            # ----- COMPUTE CYCLES FOR Sparse SpMM -----
             sparse_SpMM_PE_cycles = 0
             preload_cycles = 0
+
+            # For each K-tile (except global tokens), load corresponding V vectors
             for _tile_k in range(attn_map.shape[0]-global_tokens): 
                 # preload_cycles += my_SRAM.preload_V(nums=head*1* V.shape[1], bits=8)*(1+0.5)
+                
+                # Load V vector from SRAM to V-buffer
+                # One load per tile: nums = head * 1 * dim(V)
                 preload_cycles += my_SRAM.preload_V(nums=head*1* V.shape[1], bits=8)
             total_preload_cycles += preload_cycles
             log.info('Sparse SpMM dataloader | cycles: {}'.format(preload_cycles))
